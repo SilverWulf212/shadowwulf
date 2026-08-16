@@ -578,3 +578,102 @@ body {
   align-items: flex-start;
   padding-top: 12%;
 }
+
+/* ── the lyric sheet ──────────────────────────────────────────────── */
+
+.lyrics {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid transparent;
+}
+.lyrics summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 0 1.25rem;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+  transition: color 200ms var(--ease-out);
+  width: fit-content;
+}
+.lyrics summary::-webkit-details-marker {
+  display: none;
+}
+.lyrics summary:hover,
+.lyrics summary:focus-visible {
+  color: oklch(78% 0.13 var(--hue, 68));
+}
+/* a small flame that turns to point down when the sheet is open */
+.lyrics__cue {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 6px solid currentColor;
+  transition: transform 250ms var(--ease-out);
+}
+.lyrics[open] .lyrics__cue {
+  transform: rotate(180deg);
+}
+
+.lyrics__sheet {
+  columns: 1;
+  padding: 0 0 1.75rem;
+  max-width: 62ch;
+}
+@media (min-width: 52rem) {
+  .lyrics__sheet {
+    columns: 2;
+    column-gap: 3.5rem;
+    max-width: none;
+  }
+}
+.lyrics__part {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+.lyrics__tag {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+  opacity: 0.75;
+}
+.lyrics__line,
+.lyrics__shout,
+.lyrics__vocable {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.lyrics__line {
+  color: var(--color-bone);
+}
+/* group shouts — written in caps because that is literally how they are sung */
+.lyrics__shout {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: oklch(86% 0.13 var(--hue, 68));
+  text-shadow: 0 0 22px oklch(76% 0.15 var(--hue, 68) / 0.35);
+}
+/* held vowels carry the melody but are not words — set them back */
+.lyrics__vocable {
+  color: var(--color-bonedim);
+  opacity: 0.55;
+  letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lyrics__cue,
+  .lyrics summary {
+    transition: none;
+  }
+}

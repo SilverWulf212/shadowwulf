@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { TRACKS, ALBUM, type TrackStatus } from '../data/album'
 import TrackFire from './TrackFire'
+import { LYRICS, type LyricSection } from '../data/lyrics'
 
 const STATUS_LABEL: Record<TrackStatus, string> = {
   released: 'Out now',
@@ -73,12 +74,53 @@ function useCascade(root: React.RefObject<HTMLOListElement | null>) {
     paint()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
+
+    // Opening a lyric panel reflows every row below it WITHOUT firing a scroll
+    // event, so their --fade values go stale and they sit at the wrong opacity
+    // until you happen to scroll. Watch the list's own size instead.
+    const ro = new ResizeObserver(onScroll)
+    ro.observe(el)
+
     return () => {
       io.disconnect()
+      ro.disconnect()
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
   }, [root])
+}
+
+
+/**
+ * A lyric sheet is not a generation prompt. Repeated sections get numbered the
+ * way a printed insert numbers them (Verse 1 / Verse 2), and a section that
+ * only ever appears once stays unnumbered.
+ */
+function labelSections(sections: LyricSection[]) {
+  const total = new Map<string, number>()
+  for (const s of sections) total.set(s.tag, (total.get(s.tag) ?? 0) + 1)
+
+  const seen = new Map<string, number>()
+  return sections.map((s) => {
+    const n = (seen.get(s.tag) ?? 0) + 1
+    seen.set(s.tag, n)
+    const name = s.tag.replace('-', ' ')
+    return { ...s, label: total.get(s.tag)! > 1 ? `${name} ${n}` : name }
+  })
+}
+
+/**
+ * Three registers on this record, and they should not look alike on the page:
+ * a sung line, a group shout (written in caps because that is how the model
+ * was told to shout), and a vocable — a held vowel that carries the melody but
+ * isn't a word.
+ */
+const VOCABLE = /^(oh|ah|ay)[\s,oh ah ay]*$/i
+
+function registerOf(line: string) {
+  if (VOCABLE.test(line.trim())) return 'lyrics__vocable'
+  if (line === line.toUpperCase() && /[A-Z]/.test(line)) return 'lyrics__shout'
+  return 'lyrics__line'
 }
 
 interface Props {
@@ -98,8 +140,11 @@ export default function Tracklist({ playingNo, analyser }: Props = {}) {
           <li
             key={t.no}
             data-track
-            className="track grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 border-b border-edge py-5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:gap-x-6 sm:py-6"
+            className="track border-b border-edge"
           >
+            {/* The fire lives in here, so it stays locked to the collapsed row
+                height and never stretches when the lyric panel opens. */}
+            <div className="track-row grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:gap-x-6 sm:py-6">
             {/* Every row gets a static bed in its own fire colour -- no canvas,
                 no loop. Only the row actually playing gets the live spectrograph,
                 because only one row can ever be playing. Seven canvases to draw
@@ -150,6 +195,28 @@ export default function Tracklist({ playingNo, analyser }: Props = {}) {
                 {t.runtime}
               </span>
             </div>
+            </div>
+
+            {LYRICS[t.no] && (
+              <details className="lyrics" style={{ ['--hue' as string]: t.fireHue }}>
+                <summary>
+                  <span className="lyrics__cue" aria-hidden="true" />
+                  Lyrics
+                </summary>
+                <div className="lyrics__sheet">
+                  {labelSections(LYRICS[t.no]).map((sec, i) => (
+                    <div key={i} className="lyrics__part">
+                      <p className="lyrics__tag">{sec.label}</p>
+                      {sec.lines.map((line, j) => (
+                        <p key={j} className={registerOf(line)}>
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
           </li>
         ))}
       </ol>
