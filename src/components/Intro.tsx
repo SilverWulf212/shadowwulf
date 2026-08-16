@@ -14,26 +14,26 @@ export default function Intro() {
       <ScrollExpand
         src={peak}
         alt="Ronin standing on a storm-lit peak, his wolf beside him"
-        title=""
+        title={
+          <img
+            src={wordmark}
+            alt="ShadowWulf"
+            width={1600}
+            height={556}
+            className="intro-mark mx-auto block w-full max-w-[min(72vw,40rem)]"
+          />
+        }
         scrollHint="Descend"
         useWindowScroll
-        startWidth={38}
-        startHeight={56}
+        startWidth={44}
+        startHeight={52}
         startRadius={22}
         endRadius={0}
-        mediaZoom={1.45}
+        mediaZoom={1.12}
         scrollDistance={1.35}
         holdDistance={0.4}
         overlayScrim={0.52}
       >
-        {/* his logo IS the title — the alpha-cut wordmark, not set type */}
-        <img
-          src={wordmark}
-          alt="ShadowWulf"
-          width={1600}
-          height={556}
-          className="intro-mark mx-auto block w-full max-w-[min(80vw,44rem)]"
-        />
         <p
           className="mx-auto mt-4 mb-0 max-w-[46ch] text-balance text-bone"
           style={{ fontSize: 'clamp(1rem, 0.9rem + 0.6vw, 1.35rem)' }}

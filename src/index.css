@@ -572,3 +572,9 @@ body {
   filter: drop-shadow(0 0 50px oklch(76% 0.145 68 / 0.42))
     drop-shadow(0 0 16px oklch(86% 0.115 78 / 0.3));
 }
+
+/* lift the wordmark clear of his face in the intro frame */
+.intro .scroll-expand__title {
+  align-items: flex-start;
+  padding-top: 12%;
+}
