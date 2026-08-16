@@ -1,0 +1,351 @@
+/* ── ShadowWulf Radio ──────────────────────────────────────────────────
+   A cast object in the corner of the page, not browser chrome: chamfered
+   metal edge, a reliquary grille, and a crawl that never stops. Every
+   colour is a token from index.css — nothing here invents a hue.
+   Scoped under .rdo so this file can be imported by the component alone. */
+
+.rdo {
+  --rdo-progress: 0;
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  width: min(22rem, calc(100vw - 2rem));
+  font-family: var(--font-mono);
+}
+
+/* the metal: a thin bevel of torch gold, cooled by spirit blue on the
+   underside, wrapping a near-black plate */
+.rdo__frame {
+  padding: 1.5px;
+  clip-path: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 10px
+  );
+  background:
+    linear-gradient(
+      152deg,
+      color-mix(in oklab, var(--color-torch) 62%, transparent) 0%,
+      var(--color-edge) 34%,
+      color-mix(in oklab, var(--color-ember) 55%, transparent) 62%,
+      color-mix(in oklab, var(--color-spirit) 22%, transparent) 100%
+    );
+  /* clip-path eats outer box-shadows, so the glow has to be a filter */
+  filter: drop-shadow(0 6px 18px oklch(11% 0.006 300 / 0.7));
+}
+
+.rdo__plate {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.15rem 0.7rem;
+  padding: 0.5rem 0.75rem 0.7rem;
+  clip-path: polygon(
+    9px 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% calc(100% - 9px),
+    calc(100% - 9px) 100%,
+    9px 100%,
+    0 calc(100% - 9px),
+    0 9px
+  );
+  background:
+    radial-gradient(120% 140% at 8% 0%, var(--color-stone) 0%, transparent 60%),
+    linear-gradient(180deg, var(--color-crypt) 0%, var(--color-ink) 100%);
+  background-color: var(--color-ink);
+}
+
+@supports (backdrop-filter: blur(6px)) {
+  .rdo__plate {
+    background:
+      radial-gradient(120% 140% at 8% 0%, color-mix(in oklab, var(--color-stone) 80%, transparent) 0%, transparent 60%),
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--color-crypt) 88%, transparent) 0%,
+        color-mix(in oklab, var(--color-ink) 92%, transparent) 100%
+      );
+    backdrop-filter: blur(10px) saturate(1.15);
+  }
+}
+
+/* ── the grille ─────────────────────────────────────────────────────── */
+.rdo__sigil {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  display: block;
+  color: var(--color-steel);
+  transition: color 400ms var(--ease-out, ease);
+}
+.rdo[data-on-air='true'] .rdo__sigil {
+  color: color-mix(in oklab, var(--color-torch) 78%, transparent);
+}
+.rdo[data-playing='true'] .rdo__sigil {
+  color: var(--color-torch);
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-torch) 55%, transparent));
+}
+.rdo__crest {
+  display: block;
+}
+
+/* ── station label ──────────────────────────────────────────────────── */
+.rdo__label {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  min-width: 0;
+  font-size: 0.68rem;
+  line-height: 1.1;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rdo__lamp {
+  flex: 0 0 auto;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--color-steel);
+}
+.rdo[data-on-air='true'] .rdo__lamp {
+  background: var(--color-torch);
+  box-shadow: 0 0 7px color-mix(in oklab, var(--color-torch) 70%, transparent);
+}
+.rdo[data-playing='true'] .rdo__lamp {
+  animation: rdo-lamp 2.4s ease-in-out infinite;
+}
+
+/* ── the crawl ──────────────────────────────────────────────────────── */
+.rdo__ticker {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+
+/* Two identical copies sit side by side; sliding the pair from -50% to 0
+   moves the text LEFT TO RIGHT and lands on a frame identical to the one
+   it started on, so the loop has no seam. */
+.rdo__crawl {
+  display: flex;
+  width: max-content;
+  font-size: 0.64rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  color: var(--color-bonedim);
+  will-change: transform;
+  animation-name: rdo-crawl;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* duration is set inline so a long title scrolls at the same speed */
+}
+.rdo[data-playing='true'] .rdo__crawl {
+  color: var(--color-torch);
+}
+.rdo__crawl > span {
+  white-space: pre;
+}
+
+/* let people actually read it */
+.rdo:hover .rdo__crawl,
+.rdo:focus-within .rdo__crawl {
+  animation-play-state: paused;
+}
+
+@keyframes rdo-crawl {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes rdo-lamp {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 7px color-mix(in oklab, var(--color-torch) 70%, transparent);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 2px color-mix(in oklab, var(--color-torch) 40%, transparent);
+  }
+}
+
+@keyframes rdo-ember {
+  from {
+    filter: drop-shadow(0 6px 18px oklch(11% 0.006 300 / 0.7))
+      drop-shadow(0 0 10px color-mix(in oklab, var(--color-torch) 26%, transparent));
+  }
+  to {
+    filter: drop-shadow(0 6px 18px oklch(11% 0.006 300 / 0.7))
+      drop-shadow(0 0 22px color-mix(in oklab, var(--color-torch) 42%, transparent))
+      drop-shadow(0 0 44px color-mix(in oklab, var(--color-ember) 34%, transparent));
+  }
+}
+
+.rdo[data-playing='true'] .rdo__frame {
+  animation: rdo-ember 3.6s ease-in-out infinite alternate;
+}
+
+/* ── transport ──────────────────────────────────────────────────────── */
+.rdo__ctrl {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rdo__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  padding: 0;
+  border: 1px solid var(--color-edge);
+  /* clipped corners, same cut as the case */
+  clip-path: polygon(
+    5px 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    0 calc(100% - 5px),
+    0 5px
+  );
+  background: linear-gradient(180deg, var(--color-stone), var(--color-crypt));
+  color: var(--color-bone);
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    background 180ms ease;
+}
+
+.rdo__btn:hover:not(:disabled) {
+  color: var(--color-torchhot);
+  background: linear-gradient(180deg, var(--color-edge), var(--color-stone));
+}
+
+.rdo__btn:active:not(:disabled) {
+  color: var(--color-torch);
+  background: var(--color-crypt);
+}
+
+.rdo__btn:focus-visible {
+  outline: 2px solid var(--color-torchhot);
+  outline-offset: 2px;
+}
+
+.rdo__btn:disabled {
+  color: var(--color-steel);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── progress ───────────────────────────────────────────────────────── */
+.rdo__rail {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.34rem;
+  height: 2px;
+  background: color-mix(in oklab, var(--color-edge) 85%, transparent);
+  overflow: hidden;
+}
+
+.rdo__burn {
+  display: block;
+  height: 100%;
+  transform: scaleX(var(--rdo-progress, 0));
+  transform-origin: left center;
+  background: linear-gradient(to right, var(--color-ember), var(--color-torch));
+  box-shadow: 0 0 6px color-mix(in oklab, var(--color-torch) 60%, transparent);
+  transition: transform 220ms linear;
+}
+
+/* ── assistive-only copy ────────────────────────────────────────────── */
+.rdo__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── narrow: dock to the bottom edge rather than float over content ─── */
+@media (max-width: 34rem) {
+  .rdo {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--color-ink);
+  }
+  .rdo__frame {
+    padding: 1.5px 0 0;
+    /* one cut corner is enough once it is an edge, not an object */
+    clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px);
+  }
+  .rdo__plate {
+    clip-path: polygon(13px 0, 100% 0, 100% 100%, 0 100%, 0 13px);
+    padding: 0.45rem 0.7rem 0.6rem;
+    gap: 0.1rem 0.55rem;
+  }
+  .rdo__btn {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+}
+
+/* ── reduced motion: a still frame, still legible ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rdo__crawl {
+    animation: none;
+    transform: none;
+    width: 100%;
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .rdo__crawl > span + span {
+    display: none;
+  }
+  .rdo[data-playing='true'] .rdo__frame,
+  .rdo[data-playing='true'] .rdo__lamp {
+    animation: none;
+  }
+  .rdo__burn {
+    transition: none;
+  }
+  .rdo__sigil,
+  .rdo__btn {
+    transition: none;
+  }
+}
