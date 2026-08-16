@@ -566,3 +566,9 @@ body {
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
 }
+
+/* the wordmark landing inside the intro frame */
+.intro-mark {
+  filter: drop-shadow(0 0 50px oklch(76% 0.145 68 / 0.42))
+    drop-shadow(0 0 16px oklch(86% 0.115 78 / 0.3));
+}

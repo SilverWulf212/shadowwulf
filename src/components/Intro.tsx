@@ -1,6 +1,7 @@
 import ScrollExpand from './ScrollExpand/ScrollExpand.jsx'
 import TorchWalls from './TorchWalls'
 import peak from '../assets/magic/peak.webp'
+import wordmark from '../assets/wordmark.webp'
 
 /**
  * The way in. A torchlit corridor that opens as you scroll — the frame widens,
@@ -13,7 +14,7 @@ export default function Intro() {
       <ScrollExpand
         src={peak}
         alt="Ronin standing on a storm-lit peak, his wolf beside him"
-        title="Shadowwulf"
+        title=""
         scrollHint="Descend"
         useWindowScroll
         startWidth={38}
@@ -25,16 +26,14 @@ export default function Intro() {
         holdDistance={0.4}
         overlayScrim={0.52}
       >
-        <h2
-          className="m-0 font-display font-bold text-balance"
-          style={{
-            fontSize: 'clamp(1.6rem, 1rem + 2.6vw, 3.4rem)',
-            letterSpacing: '0',
-            lineHeight: 1.08,
-          }}
-        >
-          You felt the presence in VR
-        </h2>
+        {/* his logo IS the title — the alpha-cut wordmark, not set type */}
+        <img
+          src={wordmark}
+          alt="ShadowWulf"
+          width={1600}
+          height={556}
+          className="intro-mark mx-auto block w-full max-w-[min(80vw,44rem)]"
+        />
         <p
           className="mx-auto mt-4 mb-0 max-w-[46ch] text-balance text-bone"
           style={{ fontSize: 'clamp(1rem, 0.9rem + 0.6vw, 1.35rem)' }}
