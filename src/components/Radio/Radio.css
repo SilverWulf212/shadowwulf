@@ -116,6 +116,14 @@
   text-overflow: ellipsis;
 }
 
+.rdo__time {
+  margin-left: auto;
+  padding-left: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.14em;
+  color: color-mix(in oklab, var(--color-steel) 90%, transparent);
+}
+
 .rdo__lamp {
   flex: 0 0 auto;
   width: 0.42rem;
@@ -137,8 +145,8 @@
   grid-row: 2;
   min-width: 0;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 84%, transparent 100%);
 }
 
 /* Two identical copies sit side by side; sliding the pair from -50% to 0
@@ -317,9 +325,10 @@
     padding: 0.45rem 0.7rem 0.6rem;
     gap: 0.1rem 0.55rem;
   }
+  /* bigger tap targets once it is a thumb, not a pointer */
   .rdo__btn {
-    width: 2.15rem;
-    height: 2.15rem;
+    width: 2.4rem;
+    height: 2.4rem;
   }
 }
 

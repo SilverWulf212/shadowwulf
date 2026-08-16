@@ -8,8 +8,8 @@ function Crest() {
     <svg
       className="rdo__crest"
       viewBox="0 0 44 46"
-      width="26"
-      height="27"
+      width="30"
+      height="31"
       aria-hidden="true"
       focusable="false"
     >
@@ -99,19 +99,32 @@ function crawlLine(
   return `${parts.join(' — ')} — `
 }
 
+function clock(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 export default function RadioBar() {
   const { playing, currentTrack, toggle, next, onAir, probing, audioEl } = useRadio()
   const rootRef = useRef<HTMLElement>(null)
+  const timeRef = useRef<HTMLSpanElement>(null)
 
-  // Progress goes straight to a custom property. The device never re-renders
-  // for it, which matters because a visualiser is sharing this audio element.
+  // Progress goes straight to the DOM. The device never re-renders for it,
+  // which matters because a visualiser is sharing this audio element.
   useEffect(() => {
     const el = rootRef.current
     if (!audioEl || !el) return
     const paint = () => {
       const d = audioEl.duration
-      const p = Number.isFinite(d) && d > 0 ? audioEl.currentTime / d : 0
-      el.style.setProperty('--rdo-progress', p.toFixed(4))
+      const known = Number.isFinite(d) && d > 0
+      el.style.setProperty('--rdo-progress', (known ? audioEl.currentTime / d : 0).toFixed(4))
+      if (timeRef.current) {
+        timeRef.current.textContent = known
+          ? `${clock(audioEl.currentTime)} / ${clock(d)}`
+          : ''
+      }
     }
     paint()
     const events = ['timeupdate', 'loadedmetadata', 'seeked', 'emptied', 'ended'] as const
@@ -146,6 +159,8 @@ export default function RadioBar() {
           <p className="rdo__label">
             <span className="rdo__lamp" aria-hidden="true" />
             <span>{onAir ? 'On Air' : probing ? 'Tuning' : 'Off Air'}</span>
+            {/* elapsed / total, written straight to the DOM by the effect above */}
+            <span className="rdo__time" ref={timeRef} aria-hidden="true" />
           </p>
 
           {/* the crawl: two identical copies, translated by exactly half a

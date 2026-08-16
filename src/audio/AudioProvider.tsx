@@ -90,6 +90,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
  * the same station directly, so a component can't be broken by where it is
  * mounted in the tree.
  */
+// The hook ships alongside its provider on purpose; splitting it would only
+// move the import around.
+// oxlint-disable-next-line react/only-export-components
 export function useRadio(): RadioApi {
   const fromContext = useContext(RadioContext)
   const direct = useStation()

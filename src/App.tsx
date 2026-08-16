@@ -5,6 +5,8 @@ import MagicMoment from './components/MagicMoment'
 import Coronation from './components/Coronation'
 import Merch from './components/Merch'
 import Cavern from './components/Cavern'
+import Radio from './components/Radio'
+import { useRadio } from './audio/AudioProvider'
 import { useReveal, useScrollY } from './components/useScroll'
 import { ALBUM, SQUAD } from './data/album'
 import cover from './assets/cover.webp'
@@ -41,9 +43,11 @@ function Section({
   )
 }
 
-export default function App() {
+function Page() {
   useReveal()
   const y = useScrollY()
+  // the station is module-level, so this reads the same analyser the bar drives
+  const { analyser, currentTrack, playing } = useRadio()
 
   return (
     <>
@@ -82,7 +86,10 @@ export default function App() {
 
         {/* ── tracklist ─────────────────────────────────────────── */}
         <Section id="tracks" eyebrow={`${ALBUM.artist} · ${ALBUM.year}`} title={ALBUM.title}>
-          <Tracklist />
+          <Tracklist
+            playingNo={playing ? currentTrack?.no : undefined}
+            analyser={analyser}
+          />
         </Section>
 
         <MagicMoment />
@@ -168,5 +175,13 @@ export default function App() {
         </div>
       </footer>
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <Radio>
+      <Page />
+    </Radio>
   )
 }
