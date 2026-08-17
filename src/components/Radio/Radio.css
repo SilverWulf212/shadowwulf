@@ -137,6 +137,10 @@
 }
 .rdo[data-playing='true'] .rdo__lamp {
   animation: rdo-lamp 2.4s ease-in-out infinite;
+  /* the lamp rides the kick with everything else — --pulse is written by
+     Pulse.tsx every frame; box-shadow isn't transitioned here, so it tracks */
+  box-shadow: 0 0 calc(5px + var(--pulse, 0) * 13px)
+    oklch(from var(--color-torch) l c h / calc(0.5 + var(--pulse, 0) * 0.5));
 }
 
 /* ── the crawl ──────────────────────────────────────────────────────── */

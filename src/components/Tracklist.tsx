@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TRACKS, ALBUM, type TrackStatus } from '../data/album'
 import TrackFire from './TrackFire'
 import { LYRICS, type LyricSection } from '../data/lyrics'
+import { getAudioElement } from '../audio/graph'
 
 const STATUS_LABEL: Record<TrackStatus, string> = {
   released: 'Out now',
@@ -142,9 +143,62 @@ interface Props {
   onPlay?: (no: number) => void
 }
 
+const LINE_SEL = '.lyrics__line, .lyrics__shout, .lyrics__vocable'
+
 export default function Tracklist({ playingNo, analyser, available, onPlay }: Props = {}) {
   const ref = useRef<HTMLOListElement>(null)
   useCascade(ref)
+
+  // which lyric sheets are open — ignition only runs on the sheet belonging
+  // to the song on air, and only if someone is actually reading it
+  const [openNos, setOpenNos] = useState<ReadonlySet<number>>(new Set())
+  const openKey = [...openNos].sort((a, b) => a - b).join(',')
+
+  /**
+   * LYRIC IGNITE. While the on-air track's sheet is open, its lines catch
+   * fire in reading order as the song plays through — proportionally, by
+   * clock, because the model renders from a lyric sheet that carries no
+   * timestamps. Pausing freezes the fire where it stands; seeking backwards
+   * puts lines out again.
+   */
+  useEffect(() => {
+    const list = ref.current
+    if (!list || playingNo == null) return
+
+    // the on-air track changed: strike every other sheet back to cold
+    list.querySelectorAll(`details[data-no]:not([data-no="${playingNo}"])`).forEach((d) => {
+      d.querySelectorAll('[data-lit]').forEach((l) => l.removeAttribute('data-lit'))
+    })
+
+    if (!openNos.has(playingNo)) return
+    const audio = getAudioElement()
+    const sheet = list.querySelector(`details[data-no="${playingNo}"]`)
+    if (!audio || !sheet) return
+
+    const lines = Array.from(sheet.querySelectorAll(LINE_SEL))
+    let raf = 0
+    let lit = -1
+    const tick = () => {
+      const d = audio.duration
+      const f = Number.isFinite(d) && d > 0 ? audio.currentTime / d : 0
+      // +2 gives the fire a slight lead on the voice, like reading ahead
+      const n = Math.floor(f * (lines.length + 2))
+      if (n !== lit) {
+        if (n > lit) {
+          for (let i = Math.max(0, lit); i < Math.min(n, lines.length); i++)
+            lines[i].setAttribute('data-lit', '')
+        } else {
+          for (let i = Math.max(0, n); i < Math.min(lit, lines.length); i++)
+            lines[i].removeAttribute('data-lit')
+        }
+        lit = n
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+    // openKey, not openNos: a stable string dep that still re-runs on toggle
+  }, [playingNo, openKey])
 
   return (
     <>
@@ -240,7 +294,20 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
             </div>
 
             {LYRICS[t.no] && (
-              <details className="lyrics" style={{ ['--hue' as string]: t.fireHue }}>
+              <details
+                className="lyrics"
+                style={{ ['--hue' as string]: t.fireHue }}
+                data-no={t.no}
+                onToggle={(e) => {
+                  setOpenNos((prev) => {
+                    const next = new Set(prev)
+                    if ((e.target as HTMLDetailsElement).open) next.add(t.no)
+                    else next.delete(t.no)
+                    return next
+                  })
+                }}
+              >
+
                 <summary>
                   <span className="lyrics__cue" aria-hidden="true" />
                   Lyrics

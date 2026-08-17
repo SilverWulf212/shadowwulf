@@ -9,6 +9,9 @@ import Coronation from './components/Coronation'
 import Merch from './components/Merch'
 import Cavern from './components/Cavern'
 import Radio from './components/Radio'
+import Pulse from './components/Pulse'
+import CoronationMoment from './components/CoronationMoment'
+import WolfEgg from './components/WolfEgg'
 import { useRadio } from './audio/AudioProvider'
 import { useReveal, useSectionScrollY } from './components/useScroll'
 import { ALBUM, SQUAD, TRACKS } from './data/album'
@@ -84,6 +87,11 @@ function Page() {
     <>
       <span className="room" aria-hidden="true" />
       <DescentRail />
+      {/* the record's three secrets: the page breathing with the kick, the
+          crown waiting for the last song, and the wolf waiting for his name */}
+      <Pulse />
+      <CoronationMoment />
+      <WolfEgg />
       <Intro />
       <Hero />
 

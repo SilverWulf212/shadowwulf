@@ -7,3 +7,6 @@ dist/
 # renders land here as they finish; audio is delivered via Nextcloud, not git
 public/audio/*.mp3
 public/audio/*.flac
+test-results/
+shots/
+playwright-report/

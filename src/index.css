@@ -1106,3 +1106,331 @@ body {
     transition: none;
   }
 }
+
+/* ══ THE LIVING RECORD ═════════════════════════════════════════════════════
+   Four additions that make the page listen to its own record: a heartbeat
+   the whole site keeps, lyric sheets that ignite as the song plays, the
+   spirit wolf, and the coronation. All built from the fire language above. */
+
+/* ── 5. the pulse ─────────────────────────────────────────────────────
+   Pulse.tsx writes --pulse (0..1) on the root each frame while a song is
+   on air — a fast-attack/slow-decay envelope over the kick. CSS reads it;
+   nothing re-renders. Only properties WITHOUT transitions may carry it, or
+   the tween chases the frame and the beat smears. */
+:root {
+  --pulse: 0;
+}
+
+/* the room swells from the floor — scale, never opacity (it transitions) */
+:root[data-room='lit'] .room {
+  scale: calc(1 + var(--pulse) * 0.05);
+}
+
+/* torches and the descent rail breathe through a brightness filter on their
+   static parents — the animated children keep their own transforms */
+.torch-walls {
+  filter: brightness(calc(0.92 + var(--pulse) * 0.55));
+}
+.rail {
+  filter: brightness(calc(0.9 + var(--pulse) * 0.5));
+}
+
+/* ── 6. lyric ignite ──────────────────────────────────────────────────
+   A lit line keeps its register — sung, shouted, or held vowel — and takes
+   its own track's fire. The fire follows the song down the sheet in
+   reading order; pausing holds it, seeking back puts lines out. */
+.lyrics__line,
+.lyrics__shout,
+.lyrics__vocable {
+  transition:
+    color 450ms var(--ease-out),
+    opacity 450ms var(--ease-out),
+    text-shadow 450ms var(--ease-out);
+}
+
+.lyrics .lyrics__line[data-lit] {
+  color: oklch(88% 0.12 var(--hue, 68));
+  text-shadow: 0 0 16px oklch(76% 0.15 var(--hue, 68) / 0.4);
+}
+.lyrics .lyrics__shout[data-lit] {
+  color: oklch(93% 0.1 var(--hue, 68));
+  text-shadow:
+    0 0 22px oklch(76% 0.15 var(--hue, 68) / 0.55),
+    0 0 44px oklch(76% 0.15 var(--hue, 68) / 0.25);
+}
+.lyrics .lyrics__vocable[data-lit] {
+  color: oklch(80% 0.1 var(--hue, 68));
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lyrics__line,
+  .lyrics__shout,
+  .lyrics__vocable {
+    transition: none;
+  }
+}
+
+/* ── 7. the spirit wolf ───────────────────────────────────────────────
+   Summoned by typing his name. Crosses once, above the radio dock, gone.
+   He is drawn dark with a gold edge — the gold is what makes him a spirit
+   rather than a shadow; the eye is the brightest thing on him. */
+.wolf-run {
+  position: fixed;
+  bottom: calc(var(--rdo-h, 0px) + 3vh);
+  left: 0;
+  z-index: 60;
+  width: clamp(9rem, 16vw, 15rem);
+  pointer-events: none;
+  animation: wolf-dash 2.8s cubic-bezier(0.32, 0.5, 0.42, 1) forwards;
+}
+
+.wolf-run__wolf {
+  display: block;
+  width: 100%;
+  animation: wolf-gallop 0.42s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px oklch(76% 0.145 68 / 0.4));
+}
+
+.wolf-run__body {
+  fill: oklch(16% 0.012 300);
+  stroke: var(--color-torch);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.wolf-run__far {
+  fill: oklch(16% 0.012 300);
+  stroke: oklch(from var(--color-torch) l c h / 0.4);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.wolf-run__eye {
+  fill: var(--color-torchhot);
+}
+
+@keyframes wolf-dash {
+  0% {
+    translate: -20vw 0;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    translate: 114vw -5vh;
+    opacity: 0;
+  }
+}
+
+@keyframes wolf-gallop {
+  from {
+    scale: 1 1;
+    translate: 0 0;
+  }
+  to {
+    scale: 0.985 1.02;
+    translate: 0 -0.45rem;
+  }
+}
+
+/* ── 8. the coronation ────────────────────────────────────────────────
+   Fired once, when every song that exists has been heard. Gold rays off a
+   dark field, the crest, his name — and a scroll he can print. Escape or
+   the ghost button returns the page. */
+.crown {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  background: oklch(8% 0.005 300 / 0.88);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  animation: crown-in 900ms var(--ease-out);
+}
+
+.crown__rays {
+  position: absolute;
+  inset: -42%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg 11deg,
+    oklch(86% 0.115 78 / 0.06) 11deg 13deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle,
+    transparent 16%,
+    #000 30% 52%,
+    transparent 76%
+  );
+  mask-image: radial-gradient(circle, transparent 16%, #000 30% 52%, transparent 76%);
+  animation: crown-turn 90s linear infinite;
+  /* the rays lean into the kick with everything else */
+  opacity: calc(0.7 + var(--pulse) * 0.3);
+}
+
+.crown__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.crown__crest {
+  width: clamp(7rem, 16vw, 11rem);
+  animation: crown-rise 1200ms var(--ease-out) both;
+}
+
+.crown__eyebrow {
+  margin: 1.6rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+  animation: crown-rise 900ms var(--ease-out) 250ms both;
+}
+
+.crown__title {
+  margin: 0.9rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.2rem, 1.2rem + 5vw, 4.8rem);
+  line-height: 1.02;
+  color: var(--color-bone);
+  text-wrap: balance;
+  text-shadow:
+    0 0 60px oklch(76% 0.145 68 / 0.45),
+    0 2px 18px oklch(8% 0.005 300 / 0.9);
+  animation: crown-rise 1100ms var(--ease-out) 450ms both;
+}
+
+.crown__name {
+  margin: 1.1rem 0 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 0.95rem + 1vw, 1.5rem);
+  color: var(--color-torch);
+  letter-spacing: 0.12em;
+  animation: crown-rise 900ms var(--ease-out) 800ms both;
+}
+
+.crown__cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 1.75rem;
+  margin-top: 2.4rem;
+  animation: crown-rise 900ms var(--ease-out) 1100ms both;
+}
+
+/* a cut-diamond gold button — the cue glyph from the track rows, promoted */
+.crown__btn {
+  padding: 0.85rem 1.6rem;
+  border: 1px solid var(--color-torch);
+  background: none;
+  color: var(--color-torch);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(0.6rem 0, 100% 0, 100% calc(100% - 0.6rem), calc(100% - 0.6rem) 100%, 0 100%, 0 0.6rem);
+  transition:
+    background-color 200ms var(--ease-out),
+    color 200ms var(--ease-out);
+}
+.crown__btn:hover,
+.crown__btn:focus-visible {
+  background: var(--color-torch);
+  color: var(--color-ink);
+}
+
+.crown__ghost {
+  padding: 0.85rem 0.4rem;
+  border: 0;
+  background: none;
+  color: var(--color-steel);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 200ms var(--ease-out);
+}
+.crown__ghost:hover,
+.crown__ghost:focus-visible {
+  color: var(--color-bone);
+}
+
+.crown__hint {
+  margin: 2rem 0 0;
+  max-width: 40ch;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  line-height: 1.8;
+  text-transform: uppercase;
+  color: var(--color-steel);
+  opacity: 0.75;
+  animation: crown-rise 900ms var(--ease-out) 1500ms both;
+}
+
+@keyframes crown-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes crown-rise {
+  from {
+    opacity: 0;
+    translate: 0 26px;
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
+}
+
+@keyframes crown-turn {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crown {
+    animation: none;
+  }
+  .crown__rays {
+    animation: none;
+    opacity: 0.7;
+  }
+  .crown__crest,
+  .crown__eyebrow,
+  .crown__title,
+  .crown__name,
+  .crown__cta,
+  .crown__hint {
+    animation: none;
+  }
+  .crown__btn,
+  .crown__ghost {
+    transition: none;
+  }
+}

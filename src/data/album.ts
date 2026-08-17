@@ -33,8 +33,10 @@ export const TRACKS: Track[] = [
     title: 'The Presence',
     audio: 'the-presence-metal.mp3',
     blurb: 'Something in the dark takes a breath before the torches are even lit.',
-    runtime: '1:30',
-    status: 'queued',
+    // the render came in at 1:23 against a 1:30 target — the row prints
+    // what the file is, not what it was asked for
+    runtime: '1:23',
+    status: 'released',
   },
   {
     no: 2,
@@ -42,8 +44,8 @@ export const TRACKS: Track[] = [
     title: 'Torchlight',
     audio: 'torchlight-metal.mp3',
     blurb: 'Six at a door that has killed them before, lighting one flame together.',
-    runtime: '3:00',
-    status: 'queued',
+    runtime: '2:57',
+    status: 'released',
   },
   {
     no: 3,
@@ -60,8 +62,9 @@ export const TRACKS: Track[] = [
     title: 'Six Went In',
     audio: 'six-went-in-metal.mp3',
     blurb: 'The one they scream in the car: same six in, same six out.',
-    runtime: '3:15',
-    status: 'queued',
+    // came up short of its 3:15 target; 2:07 of it exists and 2:07 is the truth
+    runtime: '2:07',
+    status: 'released',
   },
   {
     no: 5,
@@ -86,7 +89,9 @@ export const TRACKS: Track[] = [
     fireHue: 55, // pale dawn gold — morning, the doors opening
     title: 'Comes Home Last',
     blurb: 'The doors open, the morning takes the torches, and everyone walks out.',
-    runtime: '2:45',
+    // the target was 2:45; the render that landed is 2:33, and the row
+    // promised what the file does not contain
+    runtime: '2:33',
     status: 'released',
     audio: 'comes-home-last-metal.mp3',
   },
