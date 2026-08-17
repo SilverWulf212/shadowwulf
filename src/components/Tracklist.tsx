@@ -223,11 +223,12 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
             />
             {playingNo === t.no && <TrackFire hue={t.fireHue} analyser={analyser} playing />}
 
-            {/* The number IS the play button once the render has landed:
-                it swaps to a torch-gold cue on hover, focus, and while its
-                own song is on air. A row that can't be pressed keeps the
-                plain number and reads as not-yet-available. */}
-            {available?.has(t.no) && onPlay ? (
+            {/* The number IS the play button. Two things make a row playable:
+                the station's probe confirmed the file exists, OR the record
+                itself says the track is released (authored floor — a browser
+                that blocks HEAD probes must not un-release a song). A row
+                that is neither keeps the plain number. */}
+            {(available?.has(t.no) || t.status === 'released') && onPlay ? (
               <button
                 type="button"
                 className="track-play"

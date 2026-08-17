@@ -1,5 +1,5 @@
 import { ensureGraph, getAudioElement, peekGraph } from './graph'
-import { RADIO_TRACKS, probeTrack, type RadioTrack } from './tracks'
+import { RADIO_TRACKS, RELEASED_TRACKS, probeTrack, type RadioTrack } from './tracks'
 
 /**
  * ShadowWulf Radio — the station itself.
@@ -26,10 +26,17 @@ export interface StationState {
   tunedIn: boolean
 }
 
+/**
+ * The station starts with everything the record itself says is released —
+ * NOT an empty shelf. The probe is DISCOVERY (for songs still rendering that
+ * land mid-session), never a gate: some real browsers block or break HEAD
+ * fetches (privacy extensions, tracking protection, proxies), and a failed
+ * probe must not be able to un-release a song that album.ts says is out.
+ */
 const OFF_AIR: StationState = {
   playing: false,
   currentTrack: null,
-  tracks: [],
+  tracks: RELEASED_TRACKS,
   analyser: null,
   probing: true,
   tunedIn: false,
@@ -138,11 +145,15 @@ async function probeAvailability() {
   const results = await Promise.all(RADIO_TRACKS.map((t) => probeTrack(t.src, signal)))
   if (signal.aborted) return
 
-  const found = RADIO_TRACKS.filter((_, i) => results[i])
+  // union: what the probe found, plus everything the record already
+  // released. The probe can only ever ADD tracks here.
+  const found = RADIO_TRACKS.filter((_, i) => results[i] || RADIO_TRACKS[i].released)
   if (!sameTracks(state.tracks, found)) emit({ tracks: found })
   emit({ probing: false })
 
   // keep listening for the rest of the record while anyone is watching
+  // (found includes the authored-released floor, so this waits only on the
+  // songs that are genuinely still rendering)
   if (listeners.size > 0 && found.length < RADIO_TRACKS.length) {
     pollTimer = window.setTimeout(
       () => void probeAvailability(),

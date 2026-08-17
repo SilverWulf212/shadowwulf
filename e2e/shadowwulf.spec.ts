@@ -43,6 +43,8 @@ test.beforeEach(async ({ page }) => {
     const text = msg.text()
     const url = msg.location()?.url ?? ''
     if (text.includes('404') && (url.includes('/audio/') || url === '')) return
+    // only possible when a test aborts the audio routes itself (THE FLOOR)
+    if (text.includes('net::ERR_FAILED') && url.includes('/audio/')) return
     if (url.includes('cloudflareinsights') || text.includes('cloudflareinsights')) return
     throw new Error(`console.error on live page: ${text} ${url}`)
   })
@@ -125,8 +127,11 @@ test('the lyric sheet opens and catches fire as the song runs', async ({ page })
 
 test('the spirit wolf answers his name', async ({ page }) => {
   await page.goto('/')
+  await page.waitForLoadState('load')
+  // keystrokes need a receiver: land focus on the document first
+  await page.locator('body').click({ position: { x: 20, y: 300 } })
   await page.keyboard.type('wulf', { delay: 60 })
-  await expect(page.locator('.wolf-run')).toBeVisible()
+  await expect(page.locator('.wolf-run')).toBeVisible({ timeout: 8_000 })
   // one crossing, then gone
   await expect(page.locator('.wolf-run')).toBeHidden({ timeout: 8_000 })
 })
@@ -171,4 +176,29 @@ test('the coronation: every song heard earns the crown and the scroll', async ({
 test('the page keeps its secrets clean — no unexpected console errors', async ({ page }) => {
   await page.goto('/')
   await page.waitForTimeout(2500)
+})
+
+test('THE FLOOR: play buttons render even when the probe is completely blocked', async ({
+  page,
+}) => {
+  // Reproduces a real visitor whose browser (privacy extension / tracking
+  // protection / proxy) breaks every HEAD fetch the station sends. The
+  // authored record is the floor: released songs must still be playable.
+  await page.route('**/audio/*.mp3', (route) => route.abort())
+  await page.goto('/')
+
+  const buttons = page.locator('button.track-play')
+  await expect(buttons.first()).toBeVisible({ timeout: 10_000 })
+  // five released tracks = five buttons (01, 02, 03, 04, 07)
+  await expect(buttons).toHaveCount(5)
+
+  // and clicking one actually plays — the audio element loads over the
+  // aborted route's head (route only blocks this test's HEAD probes via
+  // fetch; unroute first so the real file can stream)
+  await page.unroute('**/audio/*.mp3')
+  const row = page.locator('[data-track]:has(h3:text-is("King of the Dark"))')
+  await row.locator('button.track-play').click()
+  await expect(row.locator('button.track-play')).toHaveAttribute('data-playing', 'true', {
+    timeout: 15_000,
+  })
 })

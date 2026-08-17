@@ -11,6 +11,13 @@ export interface RadioTrack {
   runtime: string
   /** URL under /audio. Present whether or not the file has landed yet. */
   src: string
+  /**
+   * True when album.ts (the authored record) says this track is released.
+   * The authored word is the FLOOR: these tracks are playable even if the
+   * runtime probe never answers — a browser extension or privacy setting
+   * that breaks HEAD fetches must not be able to un-release a song.
+   */
+  released: boolean
 }
 
 /** `King of the Dark` -> `king-of-the-dark` */
@@ -38,7 +45,11 @@ export const RADIO_TRACKS: RadioTrack[] = TRACKS.map((t) => ({
   title: t.title,
   runtime: t.runtime,
   src: `${BASE}/audio/${fileFor(t)}`,
+  released: t.status === 'released',
 }))
+
+/** The tracks the record itself says are out. Always playable, probe or no probe. */
+export const RELEASED_TRACKS: RadioTrack[] = RADIO_TRACKS.filter((t) => t.released)
 
 /**
  * Does this file actually exist right now? A HEAD is enough and costs nothing.
