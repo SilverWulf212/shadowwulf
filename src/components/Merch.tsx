@@ -22,6 +22,9 @@ interface Item {
   detail: string
   format: string
   wide?: boolean
+  /** intrinsic size, so the card reserves its box before the bytes arrive */
+  w: number
+  h: number
 }
 
 const ITEMS: Item[] = [
@@ -31,13 +34,15 @@ const ITEMS: Item[] = [
     detail: '12" heavyweight vinyl, printed sleeve',
     format: 'LP',
     wide: true,
+    w: 1000,
+    h: 1000,
   },
-  { src: vinylRecord, name: 'The Pressing', detail: 'Gold-label black vinyl', format: 'LP' },
-  { src: cdCase, name: 'Compact Disc', detail: 'Jewel case, printed insert', format: 'CD' },
-  { src: cassette, name: 'Cassette', detail: 'Gold shell, clear case', format: 'TAPE' },
-  { src: tee, name: 'Wordmark Tee', detail: 'Black heavyweight cotton', format: 'SHIRT' },
-  { src: poster, name: 'Tour Poster', detail: 'Matte litho print', format: 'PRINT' },
-  { src: pinPatch, name: 'Wolf Pin & Patch', detail: 'Cast enamel, woven twill', format: 'SET' },
+  { src: vinylRecord, name: 'The Pressing', detail: 'Gold-label black vinyl', format: 'LP', w: 1000, h: 1000 },
+  { src: cdCase, name: 'Compact Disc', detail: 'Jewel case, printed insert', format: 'CD', w: 1000, h: 1000 },
+  { src: cassette, name: 'Cassette', detail: 'Gold shell, clear case', format: 'TAPE', w: 900, h: 900 },
+  { src: tee, name: 'Wordmark Tee', detail: 'Black heavyweight cotton', format: 'SHIRT', w: 900, h: 900 },
+  { src: poster, name: 'Tour Poster', detail: 'Matte litho print', format: 'PRINT', w: 900, h: 1342 },
+  { src: pinPatch, name: 'Wolf Pin & Patch', detail: 'Cast enamel, woven twill', format: 'SET', w: 900, h: 900 },
 ]
 
 export default function Merch() {
@@ -56,7 +61,11 @@ export default function Merch() {
           </p>
         </div>
 
-        <ul className="m-0 grid list-none grid-cols-1 gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        {/* items-start: the sleeve spans two columns and is therefore twice as
+            tall as the card beside it. Stretched to the row, that card's black
+            panel ran on for ~370px under its caption and read as a broken
+            image. Let each card end where its content ends. */}
+        <ul className="m-0 grid list-none grid-cols-1 items-start gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {ITEMS.map((it) => (
             <li
               key={it.name}
@@ -68,6 +77,8 @@ export default function Merch() {
               <img
                 src={it.src}
                 alt={`${it.name} — ${it.detail}`}
+                width={it.w}
+                height={it.h}
                 loading="lazy"
                 className="block w-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
               />

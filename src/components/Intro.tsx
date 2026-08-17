@@ -30,15 +30,19 @@ export default function Intro() {
         startRadius={22}
         endRadius={0}
         mediaZoom={1.12}
+        // The expansion itself earns its 1.35. The hold did not: measured, the
+        // clip-path is done by scrollY 1125 and the old 0.4 held a finished,
+        // full-bleed frame static for a further 450px. 0.12 leaves a beat to
+        // read the line under it without stalling the page.
         scrollDistance={1.35}
-        holdDistance={0.4}
+        holdDistance={0.12}
         overlayScrim={0.52}
       >
         <p
           className="mx-auto mt-4 mb-0 max-w-[46ch] text-balance text-bone"
           style={{ fontSize: 'clamp(1rem, 0.9rem + 0.6vw, 1.35rem)' }}
         >
-          Now hear his intro music.
+          You felt the presence in VR.
         </p>
       </ScrollExpand>
 

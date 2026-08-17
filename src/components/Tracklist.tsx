@@ -6,7 +6,7 @@ import { LYRICS, type LyricSection } from '../data/lyrics'
 const STATUS_LABEL: Record<TrackStatus, string> = {
   released: 'Out now',
   rendering: 'On the forge',
-  queued: 'Queued',
+  queued: 'Coming soon',
 }
 
 /** How far into the viewport a row is fully lit, as a fraction of viewport height. */
@@ -127,9 +127,22 @@ interface Props {
   /** track number currently playing, if any */
   playingNo?: number
   analyser?: AnalyserNode | null
+  /**
+   * Track numbers whose mp3 actually exists right now, as probed by the
+   * station. `status` in album.ts is the authored floor — it is hand-written
+   * and goes stale the moment a render lands. This is the truth, so it wins.
+   * Without it a row reads "Queued" while the radio is playing that very song.
+   */
+  available?: ReadonlySet<number>
+  /**
+   * Play (or pause) one track from its own row. The radio in the corner is the
+   * station; this is the record. A tracklist you cannot press is a picture of
+   * a tracklist.
+   */
+  onPlay?: (no: number) => void
 }
 
-export default function Tracklist({ playingNo, analyser }: Props = {}) {
+export default function Tracklist({ playingNo, analyser, available, onPlay }: Props = {}) {
   const ref = useRef<HTMLOListElement>(null)
   useCascade(ref)
 
@@ -156,9 +169,30 @@ export default function Tracklist({ playingNo, analyser }: Props = {}) {
             />
             {playingNo === t.no && <TrackFire hue={t.fireHue} analyser={analyser} playing />}
 
-            <span className="font-mono text-[0.75rem] tabular-nums text-steel">
-              {String(t.no).padStart(2, '0')}
-            </span>
+            {/* The number IS the play button once the render has landed:
+                it swaps to a torch-gold cue on hover, focus, and while its
+                own song is on air. A row that can't be pressed keeps the
+                plain number and reads as not-yet-available. */}
+            {available?.has(t.no) && onPlay ? (
+              <button
+                type="button"
+                className="track-play"
+                data-playing={playingNo === t.no ? 'true' : 'false'}
+                aria-label={
+                  playingNo === t.no ? `Pause ${t.title}` : `Play ${t.title}`
+                }
+                onClick={() => onPlay(t.no)}
+              >
+                <span className="track-play__no" aria-hidden="true">
+                  {String(t.no).padStart(2, '0')}
+                </span>
+                <span className="track-play__cue" aria-hidden="true" />
+              </button>
+            ) : (
+              <span className="font-mono text-[0.75rem] tabular-nums text-steel">
+                {String(t.no).padStart(2, '0')}
+              </span>
+            )}
 
             <div className="min-w-0">
               <h3
@@ -178,19 +212,27 @@ export default function Tracklist({ playingNo, analyser }: Props = {}) {
             </div>
 
             <div className="col-start-2 flex items-center gap-4 sm:col-start-3 sm:justify-end">
-              <span
-                className={[
-                  'font-mono text-[0.6rem] tracking-[0.18em] whitespace-nowrap uppercase',
-                  t.status === 'queued' ? 'text-steel' : 'text-torch',
-                ].join(' ')}
-              >
-                {t.status === 'rendering' && (
-                  <span aria-hidden="true" className="mr-2 inline-block text-torch">
-                    ●
+              {(() => {
+                // The probe outranks the hand-written status, always. A row
+                // that says "Queued" while the radio is playing that song is
+                // the site calling its own audio a liar.
+                const status = available?.has(t.no) ? 'released' : t.status
+                return (
+                  <span
+                    className={[
+                      'font-mono text-[0.6rem] tracking-[0.18em] whitespace-nowrap uppercase',
+                      status === 'queued' ? 'text-steel' : 'text-torch',
+                    ].join(' ')}
+                  >
+                    {status === 'rendering' && (
+                      <span aria-hidden="true" className="mr-2 inline-block text-torch">
+                        ●
+                      </span>
+                    )}
+                    {STATUS_LABEL[status]}
                   </span>
-                )}
-                {STATUS_LABEL[t.status]}
-              </span>
+                )
+              })()}
               <span className="font-mono text-[0.75rem] tabular-nums text-steel">
                 {t.runtime}
               </span>

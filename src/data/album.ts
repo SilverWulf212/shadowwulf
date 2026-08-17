@@ -20,7 +20,7 @@ export const ALBUM = {
   artist: 'SHADOWWULF',
   title: 'King of the Dark',
   tagline: 'The night begins to shine.',
-  subTagline: 'You felt the presence in VR. Now hear his intro music.',
+  subTagline: 'Now hear his intro music.',
   blurb:
     'Seven tracks of orchestra and metal, written as entrance music for a dungeon that already knows his name.',
   year: 2026,
@@ -31,6 +31,7 @@ export const TRACKS: Track[] = [
     no: 1,
     fireHue: 265, // cold violet — something in the dark that has not lit yet
     title: 'The Presence',
+    audio: 'the-presence-metal.mp3',
     blurb: 'Something in the dark takes a breath before the torches are even lit.',
     runtime: '1:30',
     status: 'queued',
@@ -39,6 +40,7 @@ export const TRACKS: Track[] = [
     no: 2,
     fireHue: 68, // torch gold — the flame they carry in
     title: 'Torchlight',
+    audio: 'torchlight-metal.mp3',
     blurb: 'Six at a door that has killed them before, lighting one flame together.',
     runtime: '3:00',
     status: 'queued',
@@ -49,13 +51,14 @@ export const TRACKS: Track[] = [
     title: 'King of the Dark',
     blurb: 'The coronation. Torches high, and a whole room screaming one name back.',
     runtime: '3:00',
-    status: 'rendering',
-    audio: 'king-of-the-dark.mp3',
+    status: 'released',
+    audio: 'king-of-the-dark-metal.mp3',
   },
   {
     no: 4,
     fireHue: 140, // green fire — the squad, the only one that is not gold or blue
     title: 'Six Went In',
+    audio: 'six-went-in-metal.mp3',
     blurb: 'The one they scream in the car: same six in, same six out.',
     runtime: '3:15',
     status: 'queued',
@@ -64,6 +67,7 @@ export const TRACKS: Track[] = [
     no: 5,
     fireHue: 32, // deep ember red — the giant
     title: 'The Giant',
+    audio: 'the-giant-metal.mp3',
     blurb: 'Something the size of a cathedral opens its eyes and knows exactly who came in.',
     runtime: '3:30',
     status: 'queued',
@@ -72,6 +76,7 @@ export const TRACKS: Track[] = [
     no: 6,
     fireHue: 235, // arcane blue — his own magic, the rescue
     title: 'No One Falls Alone',
+    audio: 'no-one-falls-alone-metal.mp3',
     blurb: 'Someone is on the floor in the smoke, and the boots are coming back.',
     runtime: '3:20',
     status: 'queued',
@@ -82,15 +87,22 @@ export const TRACKS: Track[] = [
     title: 'Comes Home Last',
     blurb: 'The doors open, the morning takes the torches, and everyone walks out.',
     runtime: '2:45',
-    status: 'queued',
+    status: 'released',
+    audio: 'comes-home-last-metal.mp3',
   },
 ]
 
 export const SQUAD = [
   { name: 'Ronin', role: 'Calls the turn. Walks the front. Comes home last.' },
   { name: 'Slade', role: 'Hits first. Holds the front line.' },
-  { name: 'Claire', role: 'Calls the trap before it opens.' },
+  // Christy is deliberately NOT one of the six. The record's spine is "six went
+  // in, six walk out", and her whole role in the lyrics is that she holds the
+  // count rather than belongs to it: "she is not in the count, she is what the
+  // count is for". Her line here has to say that, or the page contradicts the
+  // song it is built around.
+  { name: 'Miss Christy', role: 'Sets the board. Sees the room before you do. Never in the count, always what the count is for.' },
+  { name: 'Graham', role: 'Takes the stairs like the stairs are his.' },
   { name: 'Dad', role: 'Back wall. Nothing gets through.' },
   { name: 'Mom', role: 'Brings you back when the lights go out.' },
-  { name: 'Graham', role: 'Takes the stairs like the stairs are his.' },
+  { name: 'Claire', role: 'Calls the trap before it opens.' },
 ]

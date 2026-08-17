@@ -24,6 +24,43 @@ export function useScrollY() {
   return y
 }
 
+/**
+ * Scroll measured from the top of one section, never from the top of the page.
+ *
+ * Every parallax on this site was originally written against `useScrollY()`
+ * back when its section was at the top of the document. Anything inserted
+ * above it then hands it a scroll value hundreds or thousands of pixels too
+ * large before it has moved at all, and the effect has already run to
+ * completion by the time you can see it — which is how the hero arrived empty
+ * and how the coronation plate got dragged ~270px up out of its own frame,
+ * leaving a black band under the moon.
+ *
+ * Returns 0 until the section reaches the top of the viewport, then counts up.
+ * Measured, not assumed: the offset depends on viewport height and on props
+ * of the sections above.
+ */
+export function useSectionScrollY(ref: React.RefObject<HTMLElement | null>) {
+  const pageY = useScrollY()
+  const [top, setTop] = useState(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setTop(el.getBoundingClientRect().top + window.scrollY)
+    measure()
+    window.addEventListener('resize', measure)
+    // sections above size themselves off innerHeight, so they can move us
+    const ro = new ResizeObserver(measure)
+    ro.observe(document.body)
+    return () => {
+      window.removeEventListener('resize', measure)
+      ro.disconnect()
+    }
+  }, [ref])
+
+  return Math.max(0, pageY - top)
+}
+
 /** Adds data-lit="true" to every [data-rise] element as it enters view. */
 export function useReveal() {
   useEffect(() => {

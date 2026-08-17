@@ -1,14 +1,17 @@
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import Intro from './components/Intro'
+import DescentRail from './components/DescentRail'
+import DeadWax from './components/DeadWax'
 import Hero from './components/Hero'
 import Tracklist from './components/Tracklist'
-import MagicMoment from './components/MagicMoment'
+import { MagicAside, MagicFeature } from './components/MagicMoment'
 import Coronation from './components/Coronation'
 import Merch from './components/Merch'
 import Cavern from './components/Cavern'
 import Radio from './components/Radio'
 import { useRadio } from './audio/AudioProvider'
-import { useReveal, useScrollY } from './components/useScroll'
-import { ALBUM, SQUAD } from './data/album'
+import { useReveal, useSectionScrollY } from './components/useScroll'
+import { ALBUM, SQUAD, TRACKS } from './data/album'
 import cover from './assets/cover.webp'
 import portrait from './assets/magic/helm-portrait.webp'
 
@@ -45,12 +48,42 @@ function Section({
 
 function Page() {
   useReveal()
-  const y = useScrollY()
+  // the cover plate drifts against ITS OWN section, not the document -- on
+  // absolute scroll it was being shoved ~100px up out of its column
+  const coverRef = useRef<HTMLElement>(null)
+  const coverY = useSectionScrollY(coverRef)
   // the station is module-level, so this reads the same analyser the bar drives
-  const { analyser, currentTrack, playing } = useRadio()
+  const { analyser, currentTrack, playing, tracks, playTrack } = useRadio()
+  // which songs have actually landed — probed, not declared
+  const available = useMemo(() => new Set(tracks.map((t) => t.no)), [tracks])
+  const playByNo = useCallback(
+    (no: number) => {
+      const t = tracks.find((x) => x.no === no)
+      if (t) playTrack(t.id)
+    },
+    [tracks, playTrack],
+  )
+
+  // Every track already owns a fire colour, but it only ever reached its own
+  // row. When a song is on air the whole room takes that colour instead: the
+  // ambient light under the page shifts to the playing track's hue, so putting
+  // "King of the Dark" on turns the site white-gold and "Comes Home Last" turns
+  // it dawn. The tracklist stops being the only place the record is audible.
+  useEffect(() => {
+    const root = document.documentElement
+    const hue = TRACKS.find((t) => t.no === currentTrack?.no)?.fireHue
+    if (playing && hue != null) {
+      root.style.setProperty('--room-hue', String(hue))
+      root.setAttribute('data-room', 'lit')
+    } else {
+      root.removeAttribute('data-room')
+    }
+  }, [playing, currentTrack])
 
   return (
     <>
+      <span className="room" aria-hidden="true" />
+      <DescentRail />
       <Intro />
       <Hero />
 
@@ -82,6 +115,11 @@ function Page() {
           </div>
         </section>
 
+        {/* The two magic photos are split across the page on purpose. Side by
+            side they cancelled each other out — same size, same blue, half a
+            screen apart. Apart they read as a promise and its payoff. */}
+        <MagicAside />
+
         <Coronation />
 
         {/* ── tracklist ─────────────────────────────────────────── */}
@@ -89,23 +127,26 @@ function Page() {
           <Tracklist
             playingNo={playing ? currentTrack?.no : undefined}
             analyser={analyser}
+            available={available}
+            onPlay={playByNo}
           />
         </Section>
 
-        <MagicMoment />
-
         {/* ── cover ─────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden border-t border-edge py-20 sm:py-28 lg:py-36">
+        <section
+          ref={coverRef}
+          className="relative overflow-hidden border-t border-edge py-20 sm:py-28 lg:py-36"
+        >
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
             <div data-rise className="rise relative">
               <img
                 src={cover}
                 alt={`Album cover for ${ALBUM.title}: an armored figure raising a torch at a great iron door`}
-                width={1024}
-                height={1024}
+                width={1200}
+                height={1200}
                 loading="lazy"
                 className="w-full border border-edge"
-                style={{ transform: `translate3d(0,${y * -0.015}px,0)` }}
+                style={{ transform: `translate3d(0,${coverY * -0.04}px,0)` }}
               />
             </div>
             <div data-rise className="rise">
@@ -133,13 +174,18 @@ function Page() {
 
         <Cavern />
 
+        {/* the payoff, at a size nothing else on the page gets */}
+        <MagicFeature />
+
         {/* ── squad ─────────────────────────────────────────────── */}
-        <Section eyebrow="Six went in" title="The Squad">
+        <Section eyebrow="Six went in · one kept the count" title="The Squad">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-14">
             <figure data-rise className="rise m-0">
               <img
                 src={portrait}
                 alt="Ronin in a wolf-crested helm, the moon behind him"
+                width={1400}
+                height={1400}
                 loading="lazy"
                 className="w-full border border-edge"
               />
@@ -173,6 +219,8 @@ function Page() {
           <span>Rendered locally · {ALBUM.year}</span>
           <span>Music generated with AI · MiniMax-Music3</span>
         </div>
+
+        <DeadWax />
       </footer>
     </>
   )

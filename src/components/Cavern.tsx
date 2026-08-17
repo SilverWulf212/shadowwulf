@@ -41,8 +41,25 @@ export default function Cavern() {
         alt=""
         aria-hidden="true"
         loading="lazy"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
-        style={{ maskImage: 'radial-gradient(70% 80% at 50% 45%, #000 20%, transparent 78%)', WebkitMaskImage: 'radial-gradient(70% 80% at 50% 45%, #000 20%, transparent 78%)' }}
+        width={1400}
+        height={1400}
+        /* At opacity-30 under this mask and this section's own black
+           gradient, the plate measured a mean luminance of 2.85/255 -- 108 KB
+           downloaded to paint nothing. It is meant to be a shape you half-see
+           in the dark, not an absence. Raised, and the mask given a wider hot
+           centre so his silhouette actually survives the falloff. */
+        /* z-[1] is load-bearing. `.cavern` sets `isolation: isolate` and paints
+           its own gradient background, and with z-index:auto this plate was
+           being composited underneath it -- measured mean luminance 2.85/255,
+           i.e. 108 KB downloaded to paint literally nothing. Forcing it to the
+           top of the stack made it appear instantly, which is what proved it
+           was stacking and not the mask or the opacity. 1 puts it above the
+           section ground and still below the cursor trail (2) and the type (3). */
+        className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover object-[50%_24%] opacity-[0.55]"
+        style={{
+          maskImage: 'radial-gradient(76% 88% at 50% 44%, #000 40%, rgba(0,0,0,0.45) 68%, transparent 88%)',
+          WebkitMaskImage: 'radial-gradient(76% 88% at 50% 44%, #000 40%, rgba(0,0,0,0.45) 68%, transparent 88%)',
+        }}
       />
       {live && (
         <Suspense fallback={null}>

@@ -23,6 +23,15 @@ export interface Photo {
   handY: number
   /** how wide the effect spreads from that point, % */
   spread?: number
+  /**
+   * Ceiling for the bolts, % down the image. The shader's bolt is a full-height
+   * vertical column, so when the hand sits below the face the column runs
+   * straight through it. `cutEnd` is where the bolts are at full strength,
+   * `cutStart` is where they have faded to nothing above it. Leave unset on a
+   * photo where nothing is in the way.
+   */
+  cutStart?: number
+  cutEnd?: number
   caption: string
 }
 
@@ -33,6 +42,10 @@ export const MAGIC_PHOTOS: Photo[] = [
     handX: 46.2,
     handY: 61.7,
     spread: 54,
+    // his chin is at ~48% and the orb at ~62%; without this the bolt column
+    // ran up through his cheek and eyebrow into his hairline
+    cutStart: 44,
+    cutEnd: 60,
     caption: 'Both hands. The whole arena watching.',
   },
   {

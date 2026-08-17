@@ -5,6 +5,7 @@ import {
   next,
   pause,
   play,
+  playTrack,
   subscribeStation,
   toggle,
 } from './station'
@@ -22,6 +23,8 @@ export interface RadioApi {
   toggle: () => void
   /** Skip to the next track in the shuffled rotation. */
   next: () => void
+  /** Play one specific track from the top; press again to pause it. */
+  playTrack: (id: string) => void
   /** fftSize 512, smoothing 0.75. Null until the first user gesture builds the graph. */
   analyser: AnalyserNode | null
   audioEl: HTMLAudioElement | null
@@ -56,6 +59,7 @@ function useStation(): RadioApi {
       pause,
       toggle,
       next,
+      playTrack,
       analyser: state.analyser,
       audioEl,
       tracks: state.tracks,

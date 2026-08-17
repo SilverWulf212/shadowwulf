@@ -134,6 +134,32 @@ export default function RadioBar() {
     }
   }, [audioEl])
 
+  // The device is fixed to the bottom edge, so it sits ON the page rather than
+  // in it. Nothing reserved room for it, which meant the last few rem of the
+  // document -- the end of the tracklist, the crew, the whole footer -- lived
+  // permanently underneath it and could not be scrolled out from under. It
+  // publishes its own measured height instead of the page guessing: the dock
+  // changes shape at 34rem and grows by the safe-area inset on a notched
+  // phone, and a hard-coded number is wrong at one of those every time.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const publish = () =>
+      document.documentElement.style.setProperty(
+        '--rdo-h',
+        `${Math.round(el.getBoundingClientRect().height)}px`,
+      )
+    publish()
+    const ro = new ResizeObserver(publish)
+    ro.observe(el)
+    window.addEventListener('resize', publish)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', publish)
+      document.documentElement.style.removeProperty('--rdo-h')
+    }
+  }, [])
+
   const title = currentTrack?.title ?? null
   const status = statusLine(onAir, probing, playing, title)
   const crawl = crawlLine(onAir, probing, playing, title)

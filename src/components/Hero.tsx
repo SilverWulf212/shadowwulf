@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Embers from './Embers'
 import { useScrollY } from './useScroll'
 import { ALBUM } from '../data/album'
@@ -14,8 +14,43 @@ import wordmark from '../assets/wordmark.webp'
  * is the whole effect.
  */
 export default function Hero() {
-  const y = useScrollY()
+  const pageY = useScrollY()
+  const ref = useRef<HTMLElement>(null)
+  const [top, setTop] = useState(0)
   const [ready, setReady] = useState(false)
+  const [landed, setLanded] = useState(false)
+
+  /**
+   * Where this section starts in the document.
+   *
+   * This is the whole fix for the dead space that used to sit under the intro.
+   * Every rate below was written when the hero WAS the top of the page, so it
+   * read `window.scrollY` directly. The intro was later inserted above it —
+   * 2.75 viewports of it — and from that moment the hero was being handed a
+   * scroll value ~2500px too large before it had moved a pixel. `lift(0.5)`
+   * translated the wordmark 1200px straight up and out of its own section, and
+   * the hero arrived on screen already emptied out.
+   *
+   * Measured rather than assumed, because the intro's height depends on the
+   * viewport and on props that are free to change.
+   */
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setTop(el.getBoundingClientRect().top + window.scrollY)
+    measure()
+    window.addEventListener('resize', measure)
+    // the intro sizes itself from innerHeight, so it can resize under us
+    const ro = new ResizeObserver(measure)
+    ro.observe(document.body)
+    return () => {
+      window.removeEventListener('resize', measure)
+      ro.disconnect()
+    }
+  }, [])
+
+  // scroll through THIS section, not through the document
+  const y = Math.max(0, pageY - top)
 
   // one orchestrated arrival: the vault lights, the crest settles, the
   // wordmark blooms. Staggered in CSS off this single flag.
@@ -23,6 +58,18 @@ export default function Hero() {
     const t = setTimeout(() => setReady(true), 60)
     return () => clearTimeout(t)
   }, [])
+
+  /**
+   * A filling CSS animation outranks an inline style, so while `hero-in` is
+   * held open every element is pinned at opacity 1 and the scroll fades below
+   * are dead code. Releasing the animation once the arrival is over hands
+   * control back to them.
+   */
+  useEffect(() => {
+    if (!ready) return
+    const t = setTimeout(() => setLanded(true), 2900)
+    return () => clearTimeout(t)
+  }, [ready])
 
   const plate = (depth: number) => ({
     transform: `translate3d(0, ${y * depth}px, 0) scale(${1 + depth * 0.12})`,
@@ -35,13 +82,15 @@ export default function Hero() {
     Math.max(0, Math.min(1, 1 - (y - start) / (end - start)))
 
   return (
-    <header className="relative isolate min-h-[100svh] overflow-hidden">
+    <header ref={ref} className="relative isolate min-h-[100svh] overflow-hidden">
       {/* depth plates */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <img
           src={far}
           alt=""
           aria-hidden="true"
+          width={2400}
+          height={1018}
           className="plate absolute inset-0 h-full w-full object-cover opacity-45 will-change-transform"
           style={plate(0.12)}
         />
@@ -49,6 +98,8 @@ export default function Hero() {
           src={mid}
           alt=""
           aria-hidden="true"
+          width={2400}
+          height={1018}
           className="plate absolute inset-0 h-full w-full object-cover opacity-60 will-change-transform"
           style={plate(0.28)}
         />
@@ -57,6 +108,8 @@ export default function Hero() {
           src={near}
           alt=""
           aria-hidden="true"
+          width={2400}
+          height={1018}
           className="plate absolute inset-0 h-full w-full object-cover opacity-80 will-change-transform"
           style={plate(0.5)}
         />
@@ -76,6 +129,7 @@ export default function Hero() {
       <div
         className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 py-24 text-center sm:px-8"
         data-ready={ready}
+        data-landed={landed}
       >
         <img
           src={crest}
@@ -99,8 +153,8 @@ export default function Hero() {
             src={wordmark}
             alt=""
             aria-hidden="true"
-            width={1500}
-            height={588}
+            width={1600}
+            height={556}
             className="mx-auto block w-full max-w-[min(86vw,54rem)]"
           />
         </h1>
@@ -134,13 +188,6 @@ export default function Hero() {
           <li>Orchestra &amp; metal</li>
         </ul>
 
-        <a
-          href="#tracks"
-          style={{ transform: lift(0.2), opacity: fade(0, 520) }}
-          className="hero-cta mt-11 inline-block border border-torch px-7 py-3 font-mono text-[0.7rem] tracking-[0.24em] whitespace-nowrap text-torch uppercase transition-colors duration-200 hover:bg-torch hover:text-ink focus-visible:bg-torch focus-visible:text-ink"
-        >
-          Enter the record
-        </a>
       </div>
     </header>
   )

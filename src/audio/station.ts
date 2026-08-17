@@ -262,6 +262,36 @@ export function toggle() {
   else play()
 }
 
+/**
+ * Play one specific track, by id — what the play button on a tracklist row
+ * calls. Distinct from `play()`, which is the radio: no mid-song drop-in, no
+ * shuffle, it starts the song you asked for at the top. Pressing it again on
+ * the song already on air pauses, so one control does both.
+ *
+ * Called straight from a click handler, so the graph is built under a gesture.
+ */
+export function playTrack(id: string) {
+  const audio = getAudioElement()
+  if (!audio) return
+  wakeGraph()
+
+  const track = state.tracks.find((t) => t.id === id)
+  if (!track) return
+
+  if (state.currentTrack?.id === id && audio.src) {
+    if (state.playing) {
+      audio.pause()
+    } else {
+      void audio.play().catch(() => emit({ playing: false }))
+    }
+    return
+  }
+
+  // don't let the rotation serve this one up again a moment later
+  queue = queue.filter((t) => t.id !== id)
+  startTrack(track, null)
+}
+
 export function next() {
   const audio = getAudioElement()
   if (!audio) return

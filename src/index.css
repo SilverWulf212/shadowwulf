@@ -61,6 +61,8 @@ body {
 
 html {
   scroll-behavior: smooth;
+  /* Anchor jumps must land above the radio dock, not behind it. */
+  scroll-padding-bottom: calc(var(--rdo-h, 0px) + 1rem);
 }
 
 body {
@@ -71,6 +73,24 @@ body {
   font-size: 1.05rem;
   line-height: 1.68;
   -webkit-font-smoothing: antialiased;
+  /* Reserve the radio's own measured height (published by RadioBar). Without
+     this the document simply ends underneath the dock and the last screenful
+     can never be scrolled clear of it. Falls back to 0 before JS mounts, when
+     there is no dock on the page to clear. */
+  padding-bottom: var(--rdo-h, 0px);
+}
+
+/* Above the dock breakpoint the device is a pill floating in the bottom-right
+   corner rather than a full-width bar, so only the corner needs protecting --
+   the footer is the one band of content that reaches it. */
+@media (min-width: 34.0625rem) {
+  body {
+    padding-bottom: 0;
+  }
+
+  footer {
+    padding-bottom: calc(var(--rdo-h, 0px) + 1.5rem);
+  }
 }
 
 /* the generated plates are painted on black; screen-blend drops the
@@ -323,6 +343,15 @@ body {
 /* Lightning renders as a full-bleed field. Masking it to a cone anchored at
    the hand point is what turns "there is lightning on this photo" into
    "it is coming out of his hands". */
+/* Two masks, intersected.
+   The cone anchors the bolts on the hand. The second layer is a ceiling: the
+   shader draws its bolt as a full-height vertical column, so on a photo where
+   the hand sits below the face the column climbs straight through it -- in
+   orb-hands it was crossing his cheek and eyebrow. `--cut-end` is where the
+   bolts reach full strength and `--cut-start` is where they are gone, both as
+   a percentage down the image, so a photo can hold the lightning below the
+   chin without shrinking the glow that belongs at the hand.
+   Defaults are a no-op: a ceiling above the top edge cuts nothing. */
 .magic__bolts {
   position: absolute;
   inset: 0;
@@ -330,22 +359,28 @@ body {
   mix-blend-mode: screen;
   opacity: 0.9;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(
-    var(--spread, 50%) calc(var(--spread, 50%) * 1.25) at var(--hx) var(--hy),
-    #000 0%,
-    rgba(0, 0, 0, 0.92) 14%,
-    rgba(0, 0, 0, 0.5) 34%,
-    rgba(0, 0, 0, 0.16) 58%,
-    transparent 80%
-  );
-  mask-image: radial-gradient(
-    var(--spread, 50%) calc(var(--spread, 50%) * 1.25) at var(--hx) var(--hy),
-    #000 0%,
-    rgba(0, 0, 0, 0.92) 14%,
-    rgba(0, 0, 0, 0.5) 34%,
-    rgba(0, 0, 0, 0.16) 58%,
-    transparent 80%
-  );
+  -webkit-mask-image:
+    radial-gradient(
+      var(--spread, 50%) calc(var(--spread, 50%) * 1.25) at var(--hx) var(--hy),
+      #000 0%,
+      rgba(0, 0, 0, 0.92) 14%,
+      rgba(0, 0, 0, 0.5) 34%,
+      rgba(0, 0, 0, 0.16) 58%,
+      transparent 80%
+    ),
+    linear-gradient(to bottom, transparent var(--cut-start, -30%), #000 var(--cut-end, -10%));
+  mask-image:
+    radial-gradient(
+      var(--spread, 50%) calc(var(--spread, 50%) * 1.25) at var(--hx) var(--hy),
+      #000 0%,
+      rgba(0, 0, 0, 0.92) 14%,
+      rgba(0, 0, 0, 0.5) 34%,
+      rgba(0, 0, 0, 0.16) 58%,
+      transparent 80%
+    ),
+    linear-gradient(to bottom, transparent var(--cut-start, -30%), #000 var(--cut-end, -10%));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 .magic__bolts canvas {
   width: 100%;
@@ -359,8 +394,8 @@ body {
   left: var(--hx);
   top: var(--hy);
   z-index: 3;
-  width: 16rem;
-  height: 16rem;
+  width: var(--core, 16rem);
+  height: var(--core, 16rem);
   translate: -50% -50%;
   border-radius: 50%;
   pointer-events: none;
@@ -398,10 +433,69 @@ body {
   }
 }
 
+/* The featured frame is roughly twice the linear size of the aside, so a fixed
+   16rem core reads as a pinprick on it. Everything that describes the glow is
+   sized off the frame instead, and the grade is pulled back a stop because a
+   larger image carries the darkness on its own. */
+.magic--feature {
+  --core: 26rem;
+  box-shadow:
+    0 0 0 1px oklch(72% 0.14 235 / 0.14),
+    0 2.5rem 6rem -2rem oklch(11% 0.006 300 / 0.9);
+}
+
+.magic--feature .magic__bolts {
+  opacity: 1;
+}
+
+.magic--feature .magic__grade {
+  background:
+    radial-gradient(120% 120% at var(--hx) var(--hy), transparent 26%, oklch(11% 0.006 300 / 0.28) 74%),
+    linear-gradient(to bottom, transparent 66%, oklch(11% 0.006 300 / 0.5) 100%);
+}
+
+/* a cold wash behind the payoff so it does not sit on the same flat ground
+   as every other section on the page */
+.magic-feature::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    80% 55% at 50% 58%,
+    oklch(72% 0.14 235 / 0.09) 0%,
+    oklch(72% 0.14 235 / 0.03) 42%,
+    transparent 72%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .magic__core {
     animation: none;
   }
+}
+
+/* GhostCursor puts `mix-blend-mode: screen` on its canvas but `z-index` on the
+   wrapper -- and a z-index makes that wrapper a stacking context, which
+   ISOLATES the blend. The canvas then screens against nothing and the wrapper
+   paints its opaque black straight over the plate behind it. That is what made
+   the cavern photo measure 2.85/255: it was there, it was simply buried under
+   an opaque trail layer. Blending the wrapper too lets the black fall away and
+   only the light survive, which is the effect the component was after. */
+.cavern .ghost-cursor {
+  mix-blend-mode: screen;
+}
+
+/* Now that the plate actually paints, the type is sitting on a photograph
+   rather than on flat ink. Give it its own darkness instead of dimming the
+   picture back down to where it was invisible. */
+.cavern h2,
+.cavern p {
+  text-shadow:
+    0 2px 4px oklch(11% 0.006 300 / 0.9),
+    0 0 22px oklch(11% 0.006 300 / 0.85),
+    0 0 48px oklch(11% 0.006 300 / 0.7);
 }
 
 /* ── cavern ───────────────────────────────────────────────────────── */
@@ -421,8 +515,7 @@ body {
 .hero-crest,
 .hero-mark,
 .hero-tag,
-.hero-spec,
-.hero-cta {
+.hero-spec {
   --in: 0;
   opacity: 0;
 }
@@ -430,8 +523,7 @@ body {
 [data-ready='true'] .hero-crest,
 [data-ready='true'] .hero-mark,
 [data-ready='true'] .hero-tag,
-[data-ready='true'] .hero-spec,
-[data-ready='true'] .hero-cta {
+[data-ready='true'] .hero-spec {
   animation: hero-in 1100ms var(--ease-out) both;
 }
 
@@ -448,8 +540,16 @@ body {
 [data-ready='true'] .hero-spec {
   animation-delay: 1080ms;
 }
-[data-ready='true'] .hero-cta {
-  animation-delay: 1220ms;
+
+/* Arrival over. A filling animation beats an inline style, so holding it open
+   would keep every element pinned at opacity 1 and make the scroll-exit fades
+   dead code. Dropping it hands the properties back to the component. */
+[data-landed='true'] .hero-crest,
+[data-landed='true'] .hero-mark,
+[data-landed='true'] .hero-tag,
+[data-landed='true'] .hero-spec {
+  animation: none;
+  opacity: 1;
 }
 
 @keyframes hero-in {
@@ -492,12 +592,10 @@ body {
   .hero-mark,
   .hero-tag,
   .hero-spec,
-  .hero-cta,
   [data-ready='true'] .hero-crest,
   [data-ready='true'] .hero-mark,
   [data-ready='true'] .hero-tag,
-  [data-ready='true'] .hero-spec,
-  [data-ready='true'] .hero-cta {
+  [data-ready='true'] .hero-spec {
     animation: none;
     opacity: 1;
   }
@@ -532,11 +630,120 @@ body {
   mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
 }
 .track-fire.is-live {
-  opacity: 1;
+  opacity: 0.88;
+}
+
+/* The playing row is the one row whose fire is bright enough to eat its own
+   type -- the blurb sits directly on the hottest part of the flame. Give the
+   text on that row its own darkness to sit against, rather than dimming the
+   fire until it stops being the point. */
+.track:has(.track-fire.is-live) .track-row h3,
+.track:has(.track-fire.is-live) .track-row p {
+  text-shadow:
+    0 1px 2px oklch(11% 0.006 300 / 0.95),
+    0 0 14px oklch(11% 0.006 300 / 0.85),
+    0 0 30px oklch(11% 0.006 300 / 0.6);
 }
 /* The row's content sits above its fire. Must exclude the canvas itself --
    a bare `.track > *` re-declares position:relative on it, which drops it
    back into the grid and blows the column layout apart. */
+/* ── the play control on a track row ──────────────────────────────── */
+
+/* One cell, two glyphs stacked: the number you read, and the cue you press.
+   Crossfaded rather than swapped so the row never reflows -- both are
+   absolutely placed in a box the size the number already occupied. */
+.track-play {
+  position: relative;
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: -0.4rem 0 0 -0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.track-play__no,
+.track-play__cue {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 160ms var(--ease-out),
+    scale 160ms var(--ease-out);
+}
+
+.track-play__no {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-steel);
+}
+
+/* the cue itself: a cut triangle, or two bars while this song is on air */
+.track-play__cue {
+  opacity: 0;
+  scale: 0.72;
+}
+.track-play__cue::before {
+  content: '';
+  width: 0.62rem;
+  height: 0.72rem;
+  background: var(--color-torch);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  transition: background-color 160ms var(--ease-out);
+}
+
+.track-play:hover .track-play__no,
+.track-play:focus-visible .track-play__no,
+.track-play[data-playing='true'] .track-play__no {
+  opacity: 0;
+  scale: 0.72;
+}
+.track-play:hover .track-play__cue,
+.track-play:focus-visible .track-play__cue,
+.track-play[data-playing='true'] .track-play__cue {
+  opacity: 1;
+  scale: 1;
+}
+
+.track-play:hover .track-play__cue::before {
+  background: var(--color-torchhot);
+}
+
+/* on air: pause bars, and they breathe with the fire behind the row */
+.track-play[data-playing='true'] .track-play__cue::before {
+  width: 0.66rem;
+  height: 0.72rem;
+  background: var(--color-torchhot);
+  clip-path: polygon(0 0, 36% 0, 36% 100%, 0 100%, 0 0, 64% 0, 100% 0, 100% 100%, 64% 100%, 64% 0);
+  animation: track-play-live 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes track-play-live {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track-play__no,
+  .track-play__cue,
+  .track-play__cue::before {
+    transition: none;
+  }
+  .track-play[data-playing='true'] .track-play__cue::before {
+    animation: none;
+  }
+}
+
 .track > *:not(.track-fire) {
   position: relative;
   z-index: 1;
@@ -674,6 +881,228 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lyrics__cue,
   .lyrics summary {
+    transition: none;
+  }
+}
+
+/* ══ EMBELLISHMENTS ══════════════════════════════════════════════════════
+   Four additions, all built from the fire language the record already uses
+   rather than new decoration bolted on: a fuse, the room, an ignition, and
+   the run-out groove. */
+
+/* ── 1. the descent rail ──────────────────────────────────────────────
+   A torch burning down the left edge. --burn (0..1) is scroll position,
+   written by DescentRail. Below the fuse the wick is unlit; above it the
+   groove is spent. The tip is the only thing that moves. */
+.rail {
+  position: fixed;
+  top: 12vh;
+  bottom: 12vh;
+  left: max(0.85rem, env(safe-area-inset-left, 0px));
+  z-index: 40;
+  width: 2px;
+  pointer-events: none;
+  /* the spent wick */
+  background: linear-gradient(
+    to bottom,
+    var(--color-edge) 0%,
+    var(--color-edge) calc(var(--burn, 0) * 100%),
+    oklch(from var(--color-edge) l c h / 0.28) calc(var(--burn, 0) * 100%),
+    oklch(from var(--color-edge) l c h / 0.28) 100%
+  );
+}
+
+/* the lit length, glowing */
+.rail__burn {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: calc(var(--burn, 0) * 100%);
+  background: linear-gradient(
+    to bottom,
+    oklch(from var(--color-ember) l c h / 0.25) 0%,
+    var(--color-torch) 62%,
+    var(--color-torchhot) 100%
+  );
+  box-shadow: 0 0 10px 1px oklch(from var(--color-torch) l c h / 0.5);
+}
+
+/* the flame at the burn line */
+.rail__tip {
+  position: absolute;
+  top: calc(var(--burn, 0) * 100%);
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-torchhot);
+  box-shadow:
+    0 0 8px 2px oklch(from var(--color-torch) l c h / 0.85),
+    0 0 22px 7px oklch(from var(--color-torch) l c h / 0.35);
+  translate: -50% -50%;
+  animation: rail-flicker 2.4s var(--ease-out) infinite;
+}
+
+@keyframes rail-flicker {
+  0%,
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+  40% {
+    opacity: 0.72;
+    scale: 0.86;
+  }
+  70% {
+    opacity: 0.94;
+    scale: 1.08;
+  }
+}
+
+/* the gutter belongs to the swipe-back gesture on a phone */
+@media (max-width: 34rem) {
+  .rail {
+    display: none;
+  }
+}
+
+/* ── 2. the room ──────────────────────────────────────────────────────
+   Ambient light under the whole page that takes the colour of whatever is
+   playing. Dark and neutral when the record is off; when a track is on air
+   it warms to that track's own fire hue. */
+.room {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    120% 62% at 50% 108%,
+    oklch(62% 0.15 var(--room-hue, 68) / 0.5) 0%,
+    oklch(52% 0.12 var(--room-hue, 68) / 0.2) 42%,
+    transparent 78%
+  );
+  transition:
+    opacity 1.4s var(--ease-out),
+    background 2.2s var(--ease-out);
+}
+
+:root[data-room='lit'] .room {
+  opacity: 0.42;
+}
+
+/* ── 3. row ignition ──────────────────────────────────────────────────
+   Hovering a track leans into the fire that row already owns rather than
+   inventing a hover colour: the bed swells and a single ember line sweeps
+   the rule underneath it. */
+.track {
+  position: relative;
+}
+
+.track-bed {
+  transition:
+    opacity 0.45s var(--ease-out),
+    scale 0.6s var(--ease-out);
+}
+
+.track:hover .track-bed,
+.track:focus-within .track-bed {
+  opacity: 0.92;
+  scale: 1.04;
+}
+
+/* the sweep, drawn on the row's own bottom rule */
+.track::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    oklch(74% 0.15 var(--hue, 68)) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: scaleX(0.35);
+  transform-origin: left center;
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.7s var(--ease-out);
+  pointer-events: none;
+}
+
+.track:hover::after,
+.track:focus-within::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* ── 4. the dead wax ──────────────────────────────────────────────────
+   The run-out groove, closing the page as the outer edge of a spinning
+   label rather than a border. */
+.wax {
+  position: relative;
+  margin-top: 3.5rem;
+  overflow: hidden;
+  height: 7.5rem;
+}
+
+.wax__disc {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(150vw, 74rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid oklch(from var(--color-edge) l c h / 0.9);
+  translate: -50% 0;
+}
+
+.wax__groove {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid oklch(from var(--color-edge) l c h / 0.55);
+  inset: 1.15rem;
+}
+
+.wax__groove:nth-child(2) {
+  inset: 2.1rem;
+  border-color: oklch(from var(--color-edge) l c h / 0.38);
+}
+
+.wax__groove:nth-child(3) {
+  inset: 2.85rem;
+  border-color: oklch(from var(--color-edge) l c h / 0.22);
+}
+
+/* scratched by hand, so it is the one line on the page that is not level */
+.wax__etch {
+  position: absolute;
+  bottom: 1.6rem;
+  left: 50%;
+  margin: 0;
+  width: min(92vw, 46rem);
+  color: oklch(from var(--color-steel) l c h / 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.26em;
+  line-height: 1.6;
+  text-align: center;
+  text-transform: uppercase;
+  translate: -50% 0;
+  rotate: -0.4deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail__tip {
+    animation: none;
+  }
+
+  .room,
+  .track-bed,
+  .track::after {
     transition: none;
   }
 }
