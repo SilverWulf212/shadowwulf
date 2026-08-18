@@ -25,7 +25,11 @@ export default function Coronation() {
   // budget checkable without measuring anything: the cap is simply
   // (SCALE - 1) / 2, and MAX_DRIFT stays under it.
   const SCALE = 1.24
-  const MAX_DRIFT = 9 // %, against an available (1.24 - 1) / 2 = 12%
+  // the moon sits ~25% down the plate and HIM ~85%; a wide band only gets
+  // ~62% of the image height, and object-top spent all of it on the sky —
+  // the moon showed and the king was cropped out of his own coronation.
+  // 66% frames rows ~25–87%: moon AND raised arms.
+  const MAX_DRIFT = 7 // %, against an available (1.24 - 1) / 2 = 12%
   const drift = Math.max(-MAX_DRIFT, Math.min(MAX_DRIFT, y * -0.012)).toFixed(2)
 
   return (
@@ -37,7 +41,7 @@ export default function Coronation() {
           aria-hidden="true"
           width={1400}
           height={1400}
-          className="h-full w-full object-cover object-top will-change-transform"
+          className="h-full w-full object-cover object-[50%_66%] will-change-transform"
           style={{ transform: `translate3d(0, ${drift}%, 0) scale(${SCALE})` }}
         />
         {/* let the type sit on something, without flattening the moon */}
@@ -45,13 +49,13 @@ export default function Coronation() {
           className="absolute inset-0"
           style={{
             // Two jobs, and they pull against each other: give the type
-            // something to sit on, and do not bury the moon. The scrim stays
-            // light through the top two thirds -- that is where the moon and
-            // his arms are, and it is the picture the title track is about --
-            // then ramps hard only in the last sixth, landing on full ink so
-            // the band ends by going dark instead of being cut off mid-chest.
+            // something to sit on, and do not bury the moon. Light at the top
+            // where the moon is, held LOW through the middle three fifths —
+            // that is where his raised arms and shoulders live now that the
+            // crop frames him — then ramping hard only in the last stretch,
+            // landing on full ink so the band ends dark under the words.
             background:
-              'linear-gradient(to bottom, oklch(11% 0.006 300 / 0.5) 0%, oklch(11% 0.006 300 / 0.12) 34%, oklch(11% 0.006 300 / 0.3) 62%, oklch(11% 0.006 300 / 0.78) 86%, oklch(11% 0.006 300) 100%)',
+              'linear-gradient(to bottom, oklch(11% 0.006 300 / 0.42) 0%, oklch(11% 0.006 300 / 0.1) 26%, oklch(11% 0.006 300 / 0.14) 56%, oklch(11% 0.006 300 / 0.5) 82%, oklch(11% 0.006 300 / 0.85) 94%, oklch(11% 0.006 300) 100%)',
           }}
         />
       </div>

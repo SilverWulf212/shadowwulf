@@ -55,10 +55,15 @@ export default function Cavern() {
            top of the stack made it appear instantly, which is what proved it
            was stacking and not the mask or the opacity. 1 puts it above the
            section ground and still below the cursor trail (2) and the type (3). */
-        className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover object-[50%_24%] opacity-[0.55]"
+        /* The subject in this plate is arms-crossed Ronin, whose brightness
+           lives in the lower half of the source (rows ~40–100%). object-cover
+           on a wide short band crops to a thin horizontal slice, and 24% put
+           that slice squarely over the photo's empty black sky — a subject
+           cropped out of his own section. 74% centers the slice on him. */
+        className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover object-[50%_74%] opacity-[0.55]"
         style={{
-          maskImage: 'radial-gradient(76% 88% at 50% 44%, #000 40%, rgba(0,0,0,0.45) 68%, transparent 88%)',
-          WebkitMaskImage: 'radial-gradient(76% 88% at 50% 44%, #000 40%, rgba(0,0,0,0.45) 68%, transparent 88%)',
+          maskImage: 'radial-gradient(76% 88% at 50% 58%, #000 40%, rgba(0,0,0,0.45) 68%, transparent 88%)',
+          WebkitMaskImage: 'radial-gradient(76% 88% at 50% 58%, #000 40%, rgba(0,0,0,0.45) 68%, transparent 88%)',
         }}
       />
       {live && (
