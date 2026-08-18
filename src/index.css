@@ -647,17 +647,21 @@ body {
 /* The row's content sits above its fire. Must exclude the canvas itself --
    a bare `.track > *` re-declares position:relative on it, which drops it
    back into the grid and blows the column layout apart. */
-/* ── the play control on a track row ──────────────────────────────── */
+ /* ── the play control on a track row ──────────────────────────────── */
 
-/* One cell, two glyphs stacked: the number you read, and the cue you press.
-   Crossfaded rather than swapped so the row never reflows -- both are
-   absolutely placed in a box the size the number already occupied. */
+/* A playable row is pressable everywhere — the button is the visible cue
+   and the keyboard path, but clicking title or blurb plays too. */
+.track-row--play {
+  cursor: pointer;
+}
+
+/* Number and cue sit side by side and BOTH are always visible. The cue is
+   not a hover secret: a control you have to discover is a control half
+   your visitors never find. */
 .track-play {
-  position: relative;
-  display: block;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin: -0.4rem 0 0 -0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   padding: 0;
   border: 0;
   background: none;
@@ -666,74 +670,52 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.track-play__no,
-.track-play__cue {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  transition:
-    opacity 160ms var(--ease-out),
-    scale 160ms var(--ease-out);
-}
-
 .track-play__no {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--color-steel);
+  transition: color 160ms var(--ease-out);
 }
 
-/* the cue itself: a cut triangle, or two bars while this song is on air */
+/* the cue itself: a cut gold triangle, or two bars while this song is on air */
 .track-play__cue {
-  opacity: 0;
-  scale: 0.72;
+  display: grid;
+  place-items: center;
+  width: 0.72rem;
+  height: 0.8rem;
+  transition: scale 160ms var(--ease-out);
 }
 .track-play__cue::before {
   content: '';
-  width: 0.62rem;
-  height: 0.72rem;
+  width: 0.68rem;
+  height: 0.78rem;
   background: var(--color-torch);
   clip-path: polygon(0 0, 100% 50%, 0 100%);
-  transition: background-color 160ms var(--ease-out);
+  transition:
+    background-color 160ms var(--ease-out),
+    filter 160ms var(--ease-out);
 }
 
-.track-play:hover .track-play__no,
-.track-play:focus-visible .track-play__no,
-.track-play[data-playing='true'] .track-play__no {
-  opacity: 0;
-  scale: 0.72;
-}
-.track-play:hover .track-play__cue,
-.track-play:focus-visible .track-play__cue,
-.track-play[data-playing='true'] .track-play__cue {
-  opacity: 1;
-  scale: 1;
-}
-
-.track-play:hover .track-play__cue::before {
-  background: var(--color-torchhot);
-}
-
-/* Touch devices have no hover to reveal the cue — a playable row that only
-   shows a number is indistinguishable from a dead one. On (hover: none) the
-   triangle is the default; the number is the thing that never shows. */
-@media (hover: none) {
-  .track-play .track-play__no {
-    opacity: 0;
-    scale: 0.72;
-  }
-  .track-play .track-play__cue {
-    opacity: 1;
-    scale: 1;
-  }
-}
-
-/* on air: pause bars, and they breathe with the fire behind the row */
+/* hover/focus lean in: brighter cue, brighter number */
+.track-play:hover .track-play__cue::before,
+.track-play:focus-visible .track-play__cue::before,
 .track-play[data-playing='true'] .track-play__cue::before {
-  width: 0.66rem;
-  height: 0.72rem;
   background: var(--color-torchhot);
+  filter: drop-shadow(0 0 6px oklch(76% 0.145 68 / 0.55));
+}
+.track-play:hover .track-play__no,
+.track-play:focus-visible .track-play__no {
+  color: var(--color-bonedim);
+}
+
+/* on air: pause bars, breathing with the fire behind the row */
+.track-play[data-playing='true'] .track-play__cue {
+  scale: 1.05;
+}
+.track-play[data-playing='true'] .track-play__cue::before {
+  width: 0.72rem;
+  height: 0.78rem;
   clip-path: polygon(0 0, 36% 0, 36% 100%, 0 100%, 0 0, 64% 0, 100% 0, 100% 100%, 64% 100%, 64% 0);
   animation: track-play-live 1.6s ease-in-out infinite alternate;
 }

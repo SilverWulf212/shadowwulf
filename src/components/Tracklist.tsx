@@ -203,7 +203,11 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
   return (
     <>
       <ol ref={ref} className="m-0 list-none border-t border-edge p-0">
-        {TRACKS.map((t) => (
+        {TRACKS.map((t) => {
+          // playable = probed OR authored-released (the floor). This drives
+          // the button, the row click, and the cursor — one truth per row.
+          const playable = (available?.has(t.no) || t.status === 'released') && !!onPlay
+          return (
           <li
             key={t.no}
             data-track
@@ -211,7 +215,19 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
           >
             {/* The fire lives in here, so it stays locked to the collapsed row
                 height and never stretches when the lyric panel opens. */}
-            <div className="track-row grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:gap-x-6 sm:py-6">
+            <div
+              className={`track-row grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:gap-x-6 sm:py-6${playable ? ' track-row--play' : ''}`}
+              onClick={
+                playable
+                  ? (e) => {
+                      // the button (and anything else interactive) handles
+                      // itself; only bare-row clicks play
+                      if ((e.target as HTMLElement).closest('button, a, summary')) return
+                      onPlay?.(t.no)
+                    }
+                  : undefined
+              }
+            >
             {/* Every row gets a static bed in its own fire colour -- no canvas,
                 no loop. Only the row actually playing gets the live spectrograph,
                 because only one row can ever be playing. Seven canvases to draw
@@ -223,12 +239,11 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
             />
             {playingNo === t.no && <TrackFire hue={t.fireHue} analyser={analyser} playing />}
 
-            {/* The number IS the play button. Two things make a row playable:
-                the station's probe confirmed the file exists, OR the record
-                itself says the track is released (authored floor — a browser
-                that blocks HEAD probes must not un-release a song). A row
-                that is neither keeps the plain number. */}
-            {(available?.has(t.no) || t.status === 'released') && onPlay ? (
+            {/* Number AND cue, side by side, always visible. The cue is not a
+                hover secret anymore — a play control you have to discover is
+                a control half your visitors never find. On air, the triangle
+                becomes pause bars. */}
+            {playable ? (
               <button
                 type="button"
                 className="track-play"
@@ -236,7 +251,7 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
                 aria-label={
                   playingNo === t.no ? `Pause ${t.title}` : `Play ${t.title}`
                 }
-                onClick={() => onPlay(t.no)}
+                onClick={() => onPlay?.(t.no)}
               >
                 <span className="track-play__no" aria-hidden="true">
                   {String(t.no).padStart(2, '0')}
@@ -328,7 +343,8 @@ export default function Tracklist({ playingNo, analyser, available, onPlay }: Pr
               </details>
             )}
           </li>
-        ))}
+          )
+        })}
       </ol>
 
       <p className="mt-8 max-w-[60ch] font-mono text-[0.7rem] leading-relaxed tracking-[0.08em] text-steel uppercase">

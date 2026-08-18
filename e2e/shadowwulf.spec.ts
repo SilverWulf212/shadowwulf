@@ -90,9 +90,12 @@ test('a row plays, the station lights, and one control pauses it', async ({ page
   const row = page.locator(`[data-track]:has(h3:text-is("${target.title}"))`)
   const btn = row.locator('button.track-play')
   await btn.waitFor({ state: 'visible' })
-  await btn.click()
 
-  // the station answers: row shows pause bars, the device admits it is live
+  // the cue is ALWAYS visible now — no hover required to know it plays
+  await expect(row.locator('.track-play__cue')).toBeVisible()
+
+  // and the whole row is the control: clicking the title plays it
+  await row.locator('h3').click()
   await expect(btn).toHaveAttribute('data-playing', 'true', { timeout: 15_000 })
   await expect(page.locator('.rdo')).toHaveAttribute('data-playing', 'true')
   const sr = page.locator('.rdo__sr')
